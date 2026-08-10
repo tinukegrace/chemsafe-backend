@@ -5,7 +5,6 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# System dependencies required by OpenCV, Pillow and Tesseract OCR
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     tesseract-ocr \
@@ -21,11 +20,12 @@ COPY . .
 
 ENV DJANGO_SETTINGS_MODULE=config.settings.prod
 
-# Temporary secret required only while building the image
+# Build-time values only
 ENV DJANGO_SECRET_KEY=build-only-secret-key
+ENV DATABASE_URL=sqlite:///build.sqlite3
 
 RUN python manage.py collectstatic --noinput
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "python manage.py migrate && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py migrate && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"]
